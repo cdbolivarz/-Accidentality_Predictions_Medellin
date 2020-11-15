@@ -1,0 +1,484 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[
+]{article}
+\usepackage{lmodern}
+\usepackage{amssymb,amsmath}
+\usepackage{ifxetex,ifluatex}
+\ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math}
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
+\hypersetup{
+  pdftitle={Agrupamiento barrios por accidentalidad},
+  pdfauthor={Carlos Bolivar},
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+\urlstyle{same} % disable monospaced font for URLs
+\usepackage[margin=1in]{geometry}
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\usepackage{framed}
+\definecolor{shadecolor}{RGB}{248,248,248}
+\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.94,0.16,0.16}{#1}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.77,0.63,0.00}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\BuiltInTok}[1]{#1}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.64,0.00,0.00}{\textbf{#1}}}
+\newcommand{\ExtensionTok}[1]{#1}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ImportTok}[1]{#1}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{#1}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\RegionMarkerTok}[1]{#1}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\usepackage{graphicx,grffile}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+% Set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+
+\title{Agrupamiento barrios por accidentalidad}
+\author{Carlos Bolivar}
+\date{14/11/2020}
+
+\begin{document}
+\maketitle
+
+Lectura de datos
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{accidentes <-}\StringTok{ }\KeywordTok{read.csv}\NormalTok{(}\StringTok{"../dataset/accidentes_medellin.csv"}\NormalTok{,}\DataTypeTok{header =} \OtherTok{TRUE}\NormalTok{,}\DataTypeTok{encoding=}\StringTok{'UTF-8'}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+Librerías
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{library}\NormalTok{(}\StringTok{"dplyr"}\NormalTok{) }\CommentTok{## load}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 
+## Attaching package: 'dplyr'
+\end{verbatim}
+
+\begin{verbatim}
+## The following objects are masked from 'package:stats':
+## 
+##     filter, lag
+\end{verbatim}
+
+\begin{verbatim}
+## The following objects are masked from 'package:base':
+## 
+##     intersect, setdiff, setequal, union
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{library}\NormalTok{(}\StringTok{"factoextra"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Loading required package: ggplot2
+\end{verbatim}
+
+\begin{verbatim}
+## Welcome! Want to learn more? See two factoextra-related books at https://goo.gl/ve3WBa
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{library}\NormalTok{(}\StringTok{"clValid"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Loading required package: cluster
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{library}\NormalTok{(}\StringTok{"sf"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Linking to GEOS 3.8.0, GDAL 3.0.4, PROJ 6.3.1
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{library}\NormalTok{(}\StringTok{"ggplot2"}\NormalTok{)}
+\KeywordTok{set.seed}\NormalTok{(}\DecValTok{31}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\hypertarget{creacion-de-variables-convenientes-para-la-agrupacion}{%
+\subsection{Creacion de variables convenientes para la
+agrupacion}\label{creacion-de-variables-convenientes-para-la-agrupacion}}
+
+CF -\textgreater{} Cantidad de incidentes días festivos. ES
+-\textgreater{} Cantidad de incidentes entre semana. FS -\textgreater{}
+Cantidad de incidentes fin de semana. CA -\textgreater{} Cantidad de
+incidentes de clase `atropello'. CC -\textgreater{} Cantidad de
+incidentes de clase `choque'. CH -\textgreater{} Cantidad de incidentes
+de gravedad `herido'. CM -\textgreater{} Cantidad de incidentes de
+gravedad `muerto'.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{  accidentes_vars <-}\StringTok{ }\NormalTok{accidentes }\OperatorTok{%>%}
+\StringTok{                }\KeywordTok{select}\NormalTok{(barrio, festivo, dia_nombre, clase, gravedad) }\OperatorTok{%>%}
+\StringTok{                }\KeywordTok{group_by}\NormalTok{(barrio) }\OperatorTok{%>%}
+\StringTok{                }\KeywordTok{summarise}\NormalTok{(}\DataTypeTok{CF =} \KeywordTok{sum}\NormalTok{(festivo }\OperatorTok{==}\StringTok{ "True"}\NormalTok{),}
+                       \DataTypeTok{ES =} \KeywordTok{sum}\NormalTok{(dia_nombre }\OperatorTok{%in%}\StringTok{ }\KeywordTok{c}\NormalTok{(}\StringTok{'lunes'}\NormalTok{, }\StringTok{'martes'}\NormalTok{, }\StringTok{'miércoles'}\NormalTok{, }\StringTok{'jueves'}\NormalTok{,}\StringTok{'viernes'}\NormalTok{) }\OperatorTok{&}\StringTok{ }\NormalTok{festivo}\OperatorTok{==}\StringTok{"False"}\NormalTok{),}
+                       \DataTypeTok{FS =} \KeywordTok{sum}\NormalTok{(dia_nombre }\OperatorTok{%in%}\StringTok{ }\KeywordTok{c}\NormalTok{(}\StringTok{'sábado'}\NormalTok{,}\StringTok{'domingo'}\NormalTok{) }\OperatorTok{&}\StringTok{ }\NormalTok{festivo}\OperatorTok{==}\StringTok{"False"}\NormalTok{),}
+                       \DataTypeTok{CA =} \KeywordTok{sum}\NormalTok{(clase }\OperatorTok{==}\StringTok{ 'atropello'}\NormalTok{),}
+                       \DataTypeTok{CC =} \KeywordTok{sum}\NormalTok{(clase }\OperatorTok{==}\StringTok{ 'choque'}\NormalTok{),}
+                       \DataTypeTok{CH =} \KeywordTok{sum}\NormalTok{(gravedad }\OperatorTok{==}\StringTok{ 'herido'}\NormalTok{),}
+                       \DataTypeTok{CM =} \KeywordTok{sum}\NormalTok{(gravedad }\OperatorTok{==}\StringTok{ 'muerto'}\NormalTok{),}
+                       \DataTypeTok{.groups =} \StringTok{'drop'}
+\NormalTok{                       )}
+\NormalTok{  accidentes_vars <-}\StringTok{ }\KeywordTok{data.frame}\NormalTok{(accidentes_vars)}
+  \KeywordTok{row.names}\NormalTok{(accidentes_vars) <-}\StringTok{ }\NormalTok{accidentes_vars}\OperatorTok{$}\NormalTok{barrio}
+\NormalTok{  accidentes_vars[}\DecValTok{1}\NormalTok{] <-}\StringTok{ }\OtherTok{NULL}
+  \KeywordTok{head}\NormalTok{(accidentes_vars)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##                      CF  ES  FS  CA  CC  CH CM
+## aldea pablo vi        5  45  33  27  35  64  2
+## alejandría           13 411  75  14 434 132  1
+## alejandro echavarría 47 556 237  98 482 595  2
+## alfonso lópez        51 777 319 132 607 772  6
+## altamira             17 597 162  50 466 504  2
+## altavista            11 241 101  62 206 214  2
+\end{verbatim}
+
+\hypertarget{preprocesamiento-y-validaciuxf3n}{%
+\subsection{Preprocesamiento y
+validación}\label{preprocesamiento-y-validaciuxf3n}}
+
+Escalar los datos
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{accidentes_sc <-}\StringTok{ }\KeywordTok{scale}\NormalTok{(accidentes_vars)}
+\end{Highlighting}
+\end{Shaded}
+
+Se calcula el estadístico de Hopkins para verificar si los datos tienen
+tendencia a agruparse. Si el estadistico es mayor a 0.5, esto quiere
+decir que el conjunto de datos es significativamente agrupable
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{res <-}\StringTok{ }\KeywordTok{get_clust_tendency}\NormalTok{(accidentes_sc, }\DataTypeTok{n =} \KeywordTok{nrow}\NormalTok{(accidentes_sc)}\OperatorTok{-}\DecValTok{1}\NormalTok{, }\DataTypeTok{graph =} \OtherTok{FALSE}\NormalTok{)}
+\NormalTok{res}\OperatorTok{$}\NormalTok{hopkins_stat}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 0.8876382
+\end{verbatim}
+
+Se calcula el K óptimo para kmeans
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{fviz_nbclust}\NormalTok{(accidentes_sc, kmeans, }\DataTypeTok{method =} \StringTok{"wss"}\NormalTok{, }\DataTypeTok{k.max =} \DecValTok{24}\NormalTok{) }\OperatorTok{+}\StringTok{ }\KeywordTok{theme_minimal}\NormalTok{() }\OperatorTok{+}\StringTok{ }\KeywordTok{ggtitle}\NormalTok{(}\StringTok{"Elbow method"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{cluster_files/figure-latex/unnamed-chunk-6-1.pdf}
+
+Se considera \(k=3\) o \(k=4\) como numero de clusters apropiado.
+
+\hypertarget{eleccion-de-algoritmo-de-agrupacion.}{%
+\subsection{Eleccion de algoritmo de
+agrupacion.}\label{eleccion-de-algoritmo-de-agrupacion.}}
+
+Se utiliza un estadístico de validación, para estimar qué algoritmo
+puede realizar la mejor estimación de los clusters. Los algoritmos
+considerados son hierarchical, kmeans, pam y clara.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{intern <-}\StringTok{ }\KeywordTok{clValid}\NormalTok{(accidentes_sc, }\DataTypeTok{nClust =} \DecValTok{3}\OperatorTok{:}\DecValTok{4}\NormalTok{, }
+              \DataTypeTok{clMethods =} \KeywordTok{c}\NormalTok{(}\StringTok{"hierarchical"}\NormalTok{,}\StringTok{"kmeans"}\NormalTok{,}\StringTok{"pam"}\NormalTok{,}\StringTok{'clara'}\NormalTok{),}
+              \DataTypeTok{validation =} \StringTok{"internal"}\NormalTok{)}
+\CommentTok{# Summary}
+\KeywordTok{summary}\NormalTok{(intern)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 
+## Clustering Methods:
+##  hierarchical kmeans pam clara 
+## 
+## Cluster sizes:
+##  3 4 
+## 
+## Validation Measures:
+##                                  3       4
+##                                           
+## hierarchical Connectivity  11.5675 18.8095
+##              Dunn           0.1380  0.2074
+##              Silhouette     0.6839  0.5983
+## kmeans       Connectivity  11.5675 44.8353
+##              Dunn           0.1380  0.0266
+##              Silhouette     0.6839  0.4739
+## pam          Connectivity  31.8651 75.9147
+##              Dunn           0.0155  0.0086
+##              Silhouette     0.4315  0.3427
+## clara        Connectivity  45.9532 81.8036
+##              Dunn           0.0170  0.0096
+##              Silhouette     0.4444  0.3448
+## 
+## Optimal Scores:
+## 
+##              Score   Method       Clusters
+## Connectivity 11.5675 hierarchical 3       
+## Dunn          0.2074 hierarchical 4       
+## Silhouette    0.6839 hierarchical 3
+\end{verbatim}
+
+Con los resultados obtenidos, se puede concluír que kmeans o
+hierarchical con \(k=3\) son los algoritmos de agrupamiento óptimo. Se
+elije Kmeans.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{km.res <-}\StringTok{ }\KeywordTok{kmeans}\NormalTok{(accidentes_sc, }\DecValTok{3}\NormalTok{, }\DataTypeTok{nstart =} \DecValTok{25}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+Cantidad de barrios por grupo
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{table}\NormalTok{(km.res[}\DecValTok{1}\NormalTok{])}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 
+##   1   2   3 
+## 159  22  88
+\end{verbatim}
+
+Se agrega la columna de grupo a los datos de accidentes
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{accidentes_vars}\OperatorTok{$}\NormalTok{grupo <-}\StringTok{ }\NormalTok{km.res}\OperatorTok{$}\NormalTok{cluster}
+\end{Highlighting}
+\end{Shaded}
+
+Nombres para cada cluster
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{grupos_hclust_lb <-}\StringTok{ }\KeywordTok{ifelse}\NormalTok{(km.res}\OperatorTok{$}\NormalTok{cluster}\OperatorTok{==}\DecValTok{1}\NormalTok{,}\StringTok{"Riesgo menor"}\NormalTok{,}
+                           \KeywordTok{ifelse}\NormalTok{(km.res}\OperatorTok{$}\NormalTok{cluster}\OperatorTok{==}\DecValTok{2}\NormalTok{,}\StringTok{"Riesgo mayor"}\NormalTok{, }\StringTok{"Riesgo medio"}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+Medias:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{aggregate}\NormalTok{(}\KeywordTok{cbind}\NormalTok{(CF,ES,FS,CA,CC,CH,CM)}\OperatorTok{~}\NormalTok{grupos_hclust_lb,}\DataTypeTok{data=}\NormalTok{accidentes_vars,}\DataTypeTok{FUN=}\NormalTok{mean)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##   grupos_hclust_lb       CF        ES        FS        CA        CC        CH
+## 1     Riesgo mayor 60.81818 2398.5909 634.90909 251.22727 2286.0000 1447.5000
+## 2     Riesgo medio 32.60227  734.8182 249.73864 100.89773  667.0568  588.1591
+## 3     Riesgo menor 10.33962  203.5597  75.30189  34.67296  183.9434  168.1824
+##          CM
+## 1 19.590909
+## 2  5.625000
+## 3  1.603774
+\end{verbatim}
+
+\hypertarget{lectura-de-mapa-y-relacion-con-los-resultados-obtenidos}{%
+\subsection{Lectura de mapa y relacion con los resultados
+obtenidos}\label{lectura-de-mapa-y-relacion-con-los-resultados-obtenidos}}
+
+Lectura de mapa.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{options}\NormalTok{(}\DataTypeTok{scipen =} \DecValTok{999}\NormalTok{)}
+\NormalTok{medellin_shape <-}\StringTok{ }\KeywordTok{st_read}\NormalTok{(}\StringTok{"../shapes/Barrio_Vereda/BarrioVereda_2014.shp"}\NormalTok{, }\DataTypeTok{stringsAsFactors=}\OtherTok{FALSE}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Reading layer `BarrioVereda_2014' from data source `C:\Users\cdbol\Documents\UniversidadRepositorios\AccidentalidadMedellin\shapes\Barrio_Vereda\BarrioVereda_2014.shp' using driver `ESRI Shapefile'
+## Simple feature collection with 332 features and 12 fields
+## geometry type:  MULTIPOLYGON
+## dimension:      XY
+## bbox:           xmin: 818288.4 ymin: 1173484 xmax: 845676.7 ymax: 1196930
+\end{verbatim}
+
+\begin{verbatim}
+## Warning in CPL_crs_parameters(x): GDAL Error 1: PROJ: proj_as_proj_string:
+## Unsupported conversion method: IGAC_Plano_Cartesiano
+
+## Warning in CPL_crs_parameters(x): GDAL Error 1: PROJ: proj_as_proj_string:
+## Unsupported conversion method: IGAC_Plano_Cartesiano
+\end{verbatim}
+
+\begin{verbatim}
+## projected CRS:  MAGNA-SIRGAS / Medellin urban grid
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{medellin_shape}\OperatorTok{$}\NormalTok{NOMBRE <-}\StringTok{ }\KeywordTok{tolower}\NormalTok{(medellin_shape}\OperatorTok{$}\NormalTok{NOMBRE)}
+\end{Highlighting}
+\end{Shaded}
+
+Relación de los datos agrupados con el mapa
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{accidentes_vars}\OperatorTok{$}\NormalTok{NOMBRE <-}\StringTok{ }\KeywordTok{row.names}\NormalTok{(accidentes_vars)}
+\NormalTok{map_and_data <-}\StringTok{ }\KeywordTok{inner_join}\NormalTok{(medellin_shape, accidentes_vars)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Joining, by = "NOMBRE"
+\end{verbatim}
+
+\hypertarget{mapa-de-barrios-y-veredas-medelluxedn-agrupados-por-accidentalidad}{%
+\subsection{Mapa de barrios y veredas Medellín agrupados por
+accidentalidad}\label{mapa-de-barrios-y-veredas-medelluxedn-agrupados-por-accidentalidad}}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{ggplot}\NormalTok{(map_and_data)}\OperatorTok{+}
+\StringTok{  }\KeywordTok{geom_sf}\NormalTok{(}\KeywordTok{aes}\NormalTok{(}\DataTypeTok{fill =} \KeywordTok{factor}\NormalTok{(grupo) )) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{scale_color_discrete}\NormalTok{(}\StringTok{"Cluster"}\NormalTok{)}\OperatorTok{+}
+\StringTok{  }\KeywordTok{theme_bw}\NormalTok{()}\OperatorTok{+}
+\StringTok{  }\KeywordTok{scale_fill_manual}\NormalTok{(}\DataTypeTok{values =} \KeywordTok{c}\NormalTok{(}\StringTok{"#daedd2"}\NormalTok{, }\StringTok{"#469536"}\NormalTok{,}\StringTok{"#a8cc99"}\NormalTok{), }\DataTypeTok{name=} \StringTok{"Accidentes por barrios Medellín"}\NormalTok{,}
+                    \DataTypeTok{labels =} \KeywordTok{c}\NormalTok{(}\StringTok{"Riesgo bajo"}\NormalTok{, }\StringTok{"Riesgo alto"}\NormalTok{, }\StringTok{"Riesgo medio"}\NormalTok{))}\OperatorTok{+}\StringTok{ }
+\StringTok{  }\KeywordTok{theme}\NormalTok{(}\DataTypeTok{legend.position =} \StringTok{"right"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{cluster_files/figure-latex/unnamed-chunk-15-1.pdf} \#\#
+Características espaciales por grupo
+
+\emph{Genaral:} es notable que el riesgo de accidente de tráficio por
+barrio aumenta a medida que se va acercando al centro del municipio,
+excepto en el caso del corriegimiento de San Cristobal. Cabe reclacar
+que lo que se menciona como riesgo, esta enfocado a la probabilidad de
+sufrir un incidente (choque o atropello) en un barrio y resultar herido
+o muerto.
+
+\emph{Riesgo bajo:} este conjunto está conformado en su mayoría por
+algunas veredas en el occidente del municipio, barrios pertenecientes a
+las comunas San Javier, La América, El Poblado, Buenos Aires, Villa
+Hermosa, Santa Cruz y El Popular. Esto puede ser debido a que estos
+lugares son espacios recidenciales, por lo cual los trayectos entre
+calles es reducido y las velocidades alcanzadas por los medios de
+transporte son moderadas, además de que los niveles de tráfico son mas
+reducidos. Todos estos factores hacen que este conjunto se considere
+como un riesgo bajo y se ve evidenciado con los resultados obtenidos.
+
+\emph{Riesgo medio:} este conjunto está conformado por los barrios que
+estan entre los extremos del municipio y los del centro. Algunos barrios
+que hacen parte de las comunas 12 de Octubre, Castilla, Aranjuez,
+Laureles Estadio, La Candelaria, Manrique, Belén, Guayabal y El Poblado.
+Las razones por las que se presenta esto, es por que estos barrios
+conectan las zonas recidenciales con las comerciales y ayudan a llegan a
+las vias principles del municipio; debido a esto, hay un aumento en el
+tráfico, velocidades y por ende en la probabilidad de tener un
+accidente.
+
+\emph{Riesgo alto:} como anteriormente se mencionó este conjunto está
+ubicado en el centro del municipio, ya que ahí está ubicada la zona
+comercial y las principales vías para entrar y salir del municipio, lo
+que conlleva a al máximo tráfico. además que se tiene que considerar que
+en estas vías entran vehiculos que ocupan mas espacio y son mas pesados,
+tales como, camiones, mulas, buses, etc. si a esto le agregamos altas
+velocidades, no solo la probabilidad de accidente se hace más grande,
+así mismo aumenta la probabilidad de que una o varias personas resulten
+heridas o en el peor de los casos muerta en algún accidente.
+
+\end{document}

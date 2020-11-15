@@ -1,0 +1,166 @@
+---
+title: "Agrupamiento barrios por accidentalidad"
+author: "Carlos Bolivar"
+date: "14/11/2020"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Lectura de datos
+
+```{r}
+accidentes <- read.csv("../dataset/accidentes_medellin.csv",header = TRUE,encoding='UTF-8')
+```
+
+Librerías
+```{r, warning=FALSE}
+library("dplyr") ## load
+library("factoextra")
+library("clValid")
+library("sf")
+library("ggplot2")
+set.seed(31)
+```
+
+## Creacion de variables convenientes para la agrupacion
+
+CF -> Cantidad de  incidentes días festivos.
+ES -> Cantidad de incidentes entre semana.
+FS -> Cantidad de incidentes fin de semana.
+CA -> Cantidad de incidentes de clase 'atropello'.
+CC -> Cantidad de incidentes de clase 'choque'.
+CH -> Cantidad de incidentes de gravedad 'herido'.
+CM -> Cantidad de incidentes de gravedad 'muerto'.
+
+```{r}
+  accidentes_vars <- accidentes %>%
+                select(barrio, festivo, dia_nombre, clase, gravedad) %>%
+                group_by(barrio) %>%
+                summarise(CF = sum(festivo == "True"),
+                       ES = sum(dia_nombre %in% c('lunes', 'martes', 'miércoles', 'jueves','viernes') & festivo=="False"),
+                       FS = sum(dia_nombre %in% c('sábado','domingo') & festivo=="False"),
+                       CA = sum(clase == 'atropello'),
+                       CC = sum(clase == 'choque'),
+                       CH = sum(gravedad == 'herido'),
+                       CM = sum(gravedad == 'muerto'),
+                       .groups = 'drop'
+                       )
+  accidentes_vars <- data.frame(accidentes_vars)
+  row.names(accidentes_vars) <- accidentes_vars$barrio
+  accidentes_vars[1] <- NULL
+  head(accidentes_vars)
+```
+
+## Preprocesamiento y validación
+
+Escalar los datos
+
+```{r}
+accidentes_sc <- scale(accidentes_vars)
+```
+
+Se calcula el estadístico de Hopkins para verificar si los datos tienen tendencia a agruparse. Si el estadistico es mayor a 0.5, esto quiere decir que el conjunto de datos es significativamente agrupable
+
+
+```{r}
+res <- get_clust_tendency(accidentes_sc, n = nrow(accidentes_sc)-1, graph = FALSE)
+res$hopkins_stat
+```
+
+Se calcula el K óptimo para kmeans
+
+```{r}
+fviz_nbclust(accidentes_sc, kmeans, method = "wss", k.max = 24) + theme_minimal() + ggtitle("Elbow method")
+```
+
+Se considera $k=3$ o $k=4$ como numero de clusters apropiado.
+
+## Eleccion de algoritmo de agrupacion.
+
+Se utiliza un estadístico de validación, para estimar qué algoritmo puede realizar la mejor estimación de los clusters. Los algoritmos considerados son hierarchical, kmeans, pam y clara.
+
+```{r}
+intern <- clValid(accidentes_sc, nClust = 3:4, 
+              clMethods = c("hierarchical","kmeans","pam",'clara'),
+              validation = "internal")
+# Summary
+summary(intern)
+```
+Con los resultados obtenidos, se puede concluír que kmeans o hierarchical con $k=3$ son los algoritmos de agrupamiento óptimo.
+Se elije Kmeans.
+
+```{r}
+km.res <- kmeans(accidentes_sc, 3, nstart = 25)
+```
+
+Cantidad de barrios por grupo
+
+```{r}
+table(km.res[1])
+```
+
+Se agrega la columna de grupo a los datos de accidentes
+
+```{r}
+accidentes_vars$grupo <- km.res$cluster
+```
+
+
+Nombres para cada cluster
+
+```{r}
+grupos_hclust_lb <- ifelse(km.res$cluster==1,"Riesgo menor",
+                           ifelse(km.res$cluster==2,"Riesgo mayor", "Riesgo medio"))
+```
+
+
+Medias:
+
+```{r}
+aggregate(cbind(CF,ES,FS,CA,CC,CH,CM)~grupos_hclust_lb,data=accidentes_vars,FUN=mean)
+```
+
+## Lectura de mapa y relacion con los resultados obtenidos
+
+Lectura de mapa.
+
+```{r}
+options(scipen = 999)
+medellin_shape <- st_read("../shapes/Barrio_Vereda/BarrioVereda_2014.shp", stringsAsFactors=FALSE)
+medellin_shape$NOMBRE <- tolower(medellin_shape$NOMBRE)
+```
+Relación de los datos agrupados con el mapa
+
+```{r}
+accidentes_vars$NOMBRE <- row.names(accidentes_vars)
+map_and_data <- inner_join(medellin_shape, accidentes_vars)
+```
+## Mapa de barrios y veredas Medellín agrupados por accidentalidad
+
+```{r, warning=FALSE}
+ggplot(map_and_data)+
+  geom_sf(aes(fill = factor(grupo) )) +
+  scale_color_discrete("Cluster")+
+  theme_bw()+
+  scale_fill_manual(values = c("#daedd2", "#469536","#a8cc99"), name= "Accidentes por barrios Medellín",
+                    labels = c("Riesgo bajo", "Riesgo alto", "Riesgo medio"))+ 
+  theme(legend.position = "right")
+```
+
+
+## Características espaciales por grupo
+
+*Genaral:* es notable que el riesgo de accidente de tráficio por barrio aumenta a medida que se va acercando al centro del municipio, excepto en el caso del corriegimiento de San Cristobal.
+Cabe reclacar que lo que se menciona como riesgo, esta enfocado a la probabilidad de sufrir un incidente (choque o atropello) en un barrio y resultar herido o muerto. 
+
+*Riesgo bajo:* este conjunto está conformado en su mayoría por algunas veredas en el occidente del municipio, barrios pertenecientes a las comunas San Javier, La América, El Poblado, Buenos Aires, Villa Hermosa, Santa Cruz y El Popular. Esto puede ser debido a que estos lugares son espacios recidenciales, por lo cual los trayectos entre calles es reducido y las velocidades alcanzadas por los medios de transporte son moderadas, además de que los niveles de tráfico son mas reducidos. Todos estos factores hacen que este conjunto se considere como un riesgo bajo y se ve evidenciado con los resultados obtenidos.
+
+*Riesgo medio:* este conjunto está conformado por los barrios que estan entre los extremos del municipio y los del centro. Algunos barrios que hacen parte de las comunas 12 de Octubre, Castilla, Aranjuez, Laureles Estadio, La Candelaria, Manrique, Belén, Guayabal y El Poblado. Las razones por las que se presenta esto, es por que estos barrios conectan las zonas recidenciales con las comerciales y ayudan a llegan a las vias principles del municipio; debido a esto, hay un aumento en el tráfico, velocidades y por ende en la probabilidad de tener un accidente.
+
+*Riesgo alto:* como anteriormente se mencionó este conjunto está ubicado en el centro del municipio, ya que ahí está ubicada la zona comercial y las principales vías para entrar y salir del municipio, lo que conlleva a al máximo tráfico. además que se tiene que considerar que en estas vías entran vehiculos que ocupan mas espacio y son mas pesados, tales como, camiones, mulas, buses, etc. si a esto le agregamos altas velocidades, no solo la probabilidad de accidente se hace más grande, así mismo aumenta la probabilidad de que una o varias personas resulten heridas o en el peor de los casos muerta en algún accidente.
+
