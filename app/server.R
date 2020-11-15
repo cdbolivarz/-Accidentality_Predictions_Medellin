@@ -137,28 +137,35 @@ shinyServer(function(input, output) {
 
     
     #CLUSTER
+  
+    load("www/cluster.Rdata")
+    barrio <- sort(distinct(accidentes,barrio)$barrio)
+    accidentes_vars <- data.frame(barrio)
+    accidentes_vars$grupo <- km.res$cluster
+    barrios <- right_join(barrios, distinct(accidentes,comuna),
+                          by = c("NOMBRE_COM" = "comuna"))
+    mapaBarrio <- right_join(barrios, accidentes_vars,
+                             by = c("NOMBRE" = "barrio"))
     
-    
-    porBarrio <- distinct(accidentes,comuna)
-    # se unen las tablas
-    mapaBarrio <- right_join(barrios, porBarrio,
-                             by = c("NOMBRE_COM" = "comuna"))
-    mapaBarrio <- group_by(mapaBarrio,NOMBRE)
     output$cluster <- renderLeaflet({
-      coloresComuna <- colorFactor("RdYlGn", mapaBarrio$NOMBRE_COM)
+      coloresBarrio <- colorFactor("YlGnBu", mapaBarrio$grupo)
 
       leaflet(mapaBarrio) %>%addProviderTiles("CartoDB.Positron")%>%
         addPolygons(
-          color = ~coloresComuna(NOMBRE_COM),
-          opacity = 0.9,
+          color = ~coloresBarrio(grupo),
+          opacity = 1,
           weight = 1, # grosor de la linea
-          fillOpacity = 0.6,
+          fillOpacity = 0.7,
           label = mapaBarrio$NOMBRE,
           highlightOptions = highlightOptions(color = "white",
                                               weight = 2,
                                               bringToFront = TRUE)
 
-        )
+        )%>%
+        addLegend("bottomright", 
+                  pal = coloresBarrio,
+                  values = ~grupo,
+                  title = "Grupo") 
 
 
     })
