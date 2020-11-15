@@ -110,13 +110,9 @@ shinyUI(
   tabPanel(title = "Agrupación Barrios",
            icon = icon("code-branch"),
            fluidPage(
-             column(4,
-                    h2("Agrupamiento de los barrios de Medellín"),
-                    includeHTML("www/grupos.html")
-                    ),
-             column(8,
-                    leafletOutput("cluster")
-                    )
+             h2("Agrupamiento de los barrios de Medellín"),
+             includeHTML("www/grupos.html"),
+             leafletOutput("cluster",height = 600)
              
              
            )
