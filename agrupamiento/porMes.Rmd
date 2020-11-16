@@ -31,6 +31,10 @@ accidentes <- read.csv("../dataset/accidentes_medellin.csv",header = TRUE,encodi
 
 ```
 
+```{r}
+summary(accidentes)
+```
+
 
 Se agrupa con las variables año, mes, clase, gravedad, barrio y la comuna
 ```{r}
@@ -38,14 +42,14 @@ Se agrupa con las variables año, mes, clase, gravedad, barrio y la comuna
 
 detach(package:dplyr)
 require(dplyr)
-porMes  <- accidentes %>% group_by(anno,mes, clase barrio, comuna) %>%
+porMes  <- accidentes %>% group_by(anno,mes, clase,gravedad,barrio, comuna) %>%
     summarise(cantidad = n())
 
 
 
 ```
 ```{r}
-summary(porMes["cantidad"])
+summary(porMes)
 ```
 
 ```{r}
@@ -79,6 +83,29 @@ El tamaño de los conjuntos de datos son los siguientes:
 paste0("Entrenamiento: ", dim(entrenamiento)[1], " filas")
 paste0("Prueba: ", dim(prueba)[1], " filas")
 ```
+```{r}
+summary(entrenamiento)
+```
+```{r}
+summary(prueba)
+```
+```{r}
+library(tidyverse)
+library(hrbrthemes)
+library(viridis)
+entrenamiento %>%
+  ggplot( aes(x=name, y=value, fill=name)) +
+    geom_boxplot() +
+    scale_fill_viridis(discrete = TRUE, alpha=0.6) +
+    geom_jitter(color="black", size=0.4, alpha=0.9) +
+    theme_ipsum() +
+    theme(
+      legend.position="none",
+      plot.title = element_text(size=11)
+    ) +
+    ggtitle("A boxplot with jitter") +
+    xlab("")
+```
 ##Bosque aleatorio de datos por mes
 Para seleccionar el número adecuado de árboles se toma una muestra del 15% de los datos de entrenamiento. 
 
@@ -108,7 +135,7 @@ En la anterior gráfica se puede ver que el error empieza a variar menos a parti
 ```{r}
 set.seed(31)
 
-bosquePorMes <- randomForest(cantidad~. , data=entrenamiento, ntree=100)
+bosquePorMes <- randomForest(cantidad~., data=entrenamiento, ntree=100)
 bosquePorMes
 ```
 
