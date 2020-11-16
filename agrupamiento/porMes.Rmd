@@ -1,0 +1,129 @@
+---
+title: "modeloMes"
+author: "Juan Felipe Valencia"
+date: "15/11/2020"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Accidentalidad por mes
+Librerías
+
+```{r, warning=FALSE}
+library("dplyr") ## load
+library("factoextra")
+library("clValid")
+library("sf")
+library("ggplot2")
+library(Metrics)
+
+```
+
+Lectura de datos
+
+```{r}
+accidentes <- read.csv("../dataset/accidentes_medellin.csv",header = TRUE,encoding='UTF-8')
+
+```
+
+
+Se agrupa con las variables año, mes, clase, gravedad, barrio y la comuna
+```{r}
+###Se agrupa por mes
+
+detach(package:dplyr)
+require(dplyr)
+porMes  <- accidentes %>% group_by(anno,mes, clase barrio, comuna) %>%
+    summarise(cantidad = n())
+
+
+
+```
+```{r}
+summary(porMes["cantidad"])
+```
+
+```{r}
+barplot(table(porMes$cantidad), 
+        xlab="Ocurrencia de accidentes",
+        ylab="Distribución cantidad de accidentes",
+        main = "Distribución de la cantidad de accidentes por mes",
+        col="lightblue",
+        yaxt="n"
+        )
+axis(2, cex.axis=0.7, las=1)
+grid(20,20, lty = 3, lwd = 0.1)
+```
+Se puede apreciar en la anterior gráfica que debido a que se agrupa por 7 variables la mayoría de los resultados son únicos.
+
+## Modelo predictivo por mes 
+De la misma forma que en los modelos anteriormente realizados se optó por usar Bosque aleatorio.
+
+### Separar Dataset en prueba y entrenamiento
+
+```{r}
+entrenamiento <- subset(porMes, 
+                      subset = (anno %in% 
+                                    c(2014,2015,2016,2017)))
+prueba <- subset(porMes, 
+                  subset = (anno %in% 2018))
+```
+El tamaño de los conjuntos de datos son los siguientes:
+
+```{r}
+paste0("Entrenamiento: ", dim(entrenamiento)[1], " filas")
+paste0("Prueba: ", dim(prueba)[1], " filas")
+```
+##Bosque aleatorio de datos por mes
+Para seleccionar el número adecuado de árboles se toma una muestra del 15% de los datos de entrenamiento. 
+
+
+```{r}
+library(randomForest)
+
+set.seed(31)
+n <- dim(entrenamiento)[1]
+muestra <- sample(1:n, round(0.15*n), replace=FALSE) #15% de datos de entrenamiento
+entrenamiento15Porc <- entrenamiento[muestra,]
+
+
+arbol<- randomForest(cantidad~., data = entrenamiento15Porc ,
+                                    ntree = 500,importance = TRUE)
+
+objetoArb <- data.frame(rf_mse = arbol$mse,
+                      arboles = seq_along(arbol$mse))
+ggplot(data = objetoArb, aes(x = arboles, y = rf_mse )) +
+  geom_line() +
+  labs(title = "Evolución del error vs número árboles",
+       x = "Número de árboles") +
+  theme_bw()
+```
+En la anterior gráfica se puede ver que el error empieza a variar menos a partir de 100 árboles, con lo cuál se opta por usar esta cantidad.
+
+```{r}
+set.seed(31)
+
+bosquePorMes <- randomForest(cantidad~. , data=entrenamiento, ntree=100)
+bosquePorMes
+```
+
+```{r}
+#Para calcular el MSE tanto de entrenamiento como de prueba
+prediccionEntrenamiento <- predict(bosquePorMes, newdata = entrenamiento)
+prediccionPrueba <- predict(bosquePorMes, newdata = prueba)
+mseEntrenamiento <- mse(entrenamiento$cantidad, prediccionEntrenamiento)
+msePrueba <- mse(prueba$cantidad, prediccionPrueba)
+varicionMse <- (abs(msePrueba-mseEntrenamiento)/mseEntrenamiento)*100
+paste0("MSE entrenamiento: ", mseEntrenamiento)
+paste0("MSE prueba: ", msePrueba)
+paste0("variación de MSE entrenamiento y prueba ", varicionMse)
+```
+
+```{r}
+varImpPlot(bosquePorMes)
+```
