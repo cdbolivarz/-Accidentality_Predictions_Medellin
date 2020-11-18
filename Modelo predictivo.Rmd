@@ -35,8 +35,6 @@ library(Metrics)
 
 # Predicción de accidentalidad en medellín
 
-Se decide realizar el modelado predictivo usando el método de arboles aleatorios por (mencionar ventajas), se toma como base el codigo propuesto en (la pagina web ciencia de los datos). Antes de todo, se observará primero la base de datos de accidentalidad en medellín entre el 2014 y el 2018:
-
 ```{r}
 accidentes <- read.csv("dataset/accidentes_medellin.csv",header = TRUE,encoding='UTF-8')
 accidentes$fecha <- as.Date(accidentes$fecha)
