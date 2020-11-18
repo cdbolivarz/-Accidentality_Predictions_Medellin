@@ -1,0 +1,365 @@
+---
+title: "Modelo predictivo"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r echo=FALSE}
+# EJECUTAR DOS VECES PARA QUE FUNCIONE
+
+# Tratamiento de datos
+# ==============================================================================
+library(MASS)
+library(dplyr)
+library(tidyr)
+library(skimr)
+
+# Gráficos
+# ==============================================================================
+library(ggplot2)
+library(ggpubr)
+
+# Preprocesado y modelado
+# ==============================================================================
+library(tidymodels)
+library(ranger)
+library(doParallel)
+
+#Metrics contiene la función MSE
+# ==============================================================================
+library(Metrics) 
+```
+
+# Predicción de accidentalidad en medellín
+
+Se decide realizar el modelado predictivo usando el método de arboles aleatorios por (mencionar ventajas), se toma como base el codigo propuesto en (la pagina web ciencia de los datos). Antes de todo, se observará primero la base de datos de accidentalidad en medellín entre el 2014 y el 2018:
+
+```{r}
+accidentes <- read.csv("dataset/accidentes_medellin.csv",header = TRUE,encoding='UTF-8')
+accidentes$fecha <- as.Date(accidentes$fecha)
+accidentes$festivo <- as.logical(accidentes$festivo)
+accidentes <- select(accidentes,fecha,hora,festivo,comuna,barrio,longitud,latitud,clase,gravedad)
+head(accidentes)
+```
+
+##Definición de variables independientes y dependientes.
+
+Para el modelo predictivo hay que tener claro cuales serán las variables independientes y dependientes. A simple vista de la base de datos de accidentalidad se puede concluir que las posibles variables independientes son la fecha, la hora, si es festivo o no, la comuna, el barrio, la longitud y latitud. Para las variables dependientes se tienen la clase de accidentalidad y la gravedad debido que como el modelo predice la accidentalidad estas son las unicas que posiblemente queremos predecir.
+
+Por lo visto la cantidad de variables independientes son bastantes, al inicio se trabajará solo con las variables que se consideran mas importantes, las cuales son fecha, si es festivo o no, comuna y barrio, las otras 3 no se consideran importantes debido a que son variables demasiadas exactas (longitud, latitud y hora), para el fin del proyecto solo son necesarias las 4 primeras. Pero en el caso de que el modelo no sea tan bueno se procedera a eliminar o agregar variables independientes hasta que se encuentre un modelo optimo dependiendo de las metricas de R cudrado y la variación del mse.  
+
+Para el caso de las variables dependientes no se ve necesario predecir la gravedad del accidente ni la clase del accidente porque el objetivo es predecir la accidentalidad, entonces se va a determinar una nueva variable que será numero de accidentes. 
+
+En conclusión, inicialmente se modelará la cantidad de accidentes en medellín respecto a la fecha, si es festivo o no, comuna y barrio para identificar que tan apropiado es el modelo planteado y luego se procederá a buscar el modelo mas optimo.
+
+
+## Modelo predictivo de número de choques
+
+En primer lugar es necesario crear la variable del numero de accidentes agrupada por las variables independientes definidas anteriormente.
+
+```{r}
+datos <- accidentes %>% group_by(fecha,festivo,comuna,barrio) %>% count(name = "numero_accidentes")
+head(datos)
+```
+
+
+Luego de tener lista la base de datos que se usará para el modelo de accidentes entonces se va a dividir la base de datos en 2 partes, la primera parte corresponderá a los datos de entrenamiento del modelo, que van del año 2014 al 2017 y la segunda parte corresponderá a los datos de prueba del modelo, que solo serán los datos del año 2018.
+
+
+```{r}
+# División de los datos en train y test
+# ==============================================================================
+set.seed(31)
+datos_train <- subset(datos, format(fecha,"%Y") %in% c(2014,2015,2016,2017))
+datos_test  <- subset(datos, format(fecha,"%Y") %in% c(2018))
+
+```
+
+
+```{r}
+head(datos_train)
+```
+
+
+```{r}
+head(datos_test)
+```
+
+
+Después de dividir los datos se proseguirá a la creación y entrenamiento del modelo, inicialmente se creará un modelo con una cantidad de arboles estandar (en este caso 150), con el fin de visualizar como se comporta inicialmente las predicciones sin preocuparnos cual es la cantidad de arboles optimo (por lo general el número de arboles optimo se estabiliza por los 100 - 150 arboles).  
+
+
+```{r}
+# Creación y entrenamiento del modelo
+# ==============================================================================
+set.seed(31)
+modelo  <- ranger(
+            formula   = numero_accidentes ~ .,
+            data      = datos_train,
+            num.trees = 150,
+            seed      = 31
+           )
+
+print(modelo)
+
+```
+
+```{r}
+## Predicción train
+# ==============================================================================
+predicciones_train <- predict(
+                        modelo, 
+                        data = datos_train
+                      )
+
+## MSE --> mse(y_pred, y_true)
+# ==============================================================================
+mse_predicciones_train <- mse(predicciones_train$predictions, datos_train$numero_accidentes)
+paste("El MSE para el conjunto de entrenamiento es:",mse_predicciones_train)
+```
+
+
+```{r}
+## Predicción test
+# ==============================================================================
+predicciones_test <- predict(
+                        modelo, 
+                        data = datos_test
+                      )
+
+## MSE --> mse(y_pred, y_true)
+# ==============================================================================
+mse_predicciones_test <- mse(predicciones_test$predictions, datos_test$numero_accidentes)
+paste("El MSE para el conjunto de prueba es:",mse_predicciones_test)
+```  
+
+
+```{r}
+### Porcentaje de variación train vs test
+# ==============================================================================
+variacion_mse <- (abs(mse_predicciones_test-mse_predicciones_train)/mse_predicciones_train)*100
+
+paste("La variación entre los mse de entrenamiento y prueba para el modelo de Bosque Aleatorio entrenado con 10 árboles es de ", round(variacion_mse,2), "%")
+```  
+Como se puede ver la medida estadística del R-cuadrado concluye que el modelo se ajusta en un 24.41 % a los datos de entrenamiento y obtiene una variación de MSE del 10.46% lo que define que el modelo no está tan sobreentrenado. Los resultados de las mededas estadísticas de este modelo no son malas pero puede llegar a ser mejores, entonces se procederá a realizar varios modelos con diferentes cantidades de variables independientes para obtener cual conjunto de variables es el ideal para la creación del modelo, además tambien se jugará con los hiperparametros de los arboles aleatorios (mtry y max_depth) debido a que estos parametros provocan muchos cambios en las predicciones, entonces se buscará aquellos que son optimos en primer lugar para hallar los mejores modelos con R_cuadrado y posteriormente se analizará cual de todos esos modelos cumplen con una variación de MSE buena.
+
+## Optimización del modelo
+
+```{r}
+# Evaluación de multiples modelos
+# ==============================================================================
+combinatoria = expand_grid(
+                  'fecha' = c(TRUE),
+                  'festivo' = c(TRUE, FALSE),
+                  'comuna' = c(TRUE, FALSE),
+                  'barrio' = c(TRUE, FALSE),
+                  'max_depth' = c(1, 3, 5, 10, 20),
+                  'mtry' = c(1,2,3,4)
+              )
+
+# Ciclo para ajustar un modelo con cada combinación 
+# ==============================================================================
+
+r_cuadrado = rep(NA, nrow(combinatoria))
+mse_train = rep(NA, nrow(combinatoria))
+mse_test = rep(NA, nrow(combinatoria))
+variaciones_mse = rep(NA, nrow(combinatoria))
+
+for(i in 1:nrow(combinatoria)){
+  
+  #Siempre irá fecha debido a que es super importante para predecir dia/mes/anno
+  datos_combinacion <- data.frame("fecha" = accidentes$fecha)
+  
+  #Combinatoria 
+  
+  if (combinatoria$festivo[i]){
+    datos_combinacion$festivo <- accidentes$festivo
+  }
+  
+  if (combinatoria$comuna[i]){
+    datos_combinacion$comuna <- accidentes$comuna
+  }
+  
+  if (combinatoria$barrio[i]){
+    datos_combinacion$barrio <- accidentes$barrio
+  }
+  
+  datos_combinacion <- datos_combinacion %>% group_by(.dots=names(datos_combinacion)) %>% count(name = "numero_accidentes")
+
+  # Separación de los datos a entrenamiento y prueba
+  
+  datos_train_combinacion <- subset(datos_combinacion, format(fecha,"%Y") %in% c(2014,2015,2016,2017))
+  
+  datos_test_combinacion <- subset(datos_combinacion, format(fecha,"%Y") %in% c(2018))
+  
+  # Modelo solo si mtry es menor o igual a la cantidad total de variables del modelo
+  
+  if(combinatoria$mtry[i] <= length(datos_combinacion) - 1){
+    
+    modelo <- ranger(
+                formula   = numero_accidentes ~ .,
+                data      = datos_train_combinacion, 
+                num.trees = 150,
+                mtry      = combinatoria$mtry[i],
+                max.depth = combinatoria$max_depth[i],
+                seed      = 31
+              )
+  
+    # R cuadrado
+    
+    r_cuadrado[i] <- round(modelo$r.squared,4)
+    
+    # MSE de entrenamiento
+    
+    predicciones_train <- predict(
+                          modelo, 
+                          data = datos_train_combinacion
+                        )
+    
+    mse_predicciones_train <- mse(predicciones_train$predictions, datos_train_combinacion$numero_accidentes)
+    
+    mse_train[i] <- round(mse_predicciones_train,2)
+    
+    # MSE de prueba
+    predicciones_test <- predict(
+                          modelo, 
+                          data = datos_test_combinacion
+                        )
+  
+    mse_predicciones_test <- mse(predicciones_test$predictions, datos_test_combinacion$numero_accidentes)
+    
+    mse_test[i] <- round(mse_predicciones_test,2)
+    
+    # Porcentaje de variación train vs test
+  
+    variacion_mse <- abs(mse_predicciones_test-mse_predicciones_train)/mse_predicciones_train
+    
+    variaciones_mse[i] <- round(variacion_mse,4)
+    
+    
+  }
+  #Nota. Si no entra al condicional es porque no es posible calcular el modelo entonces las medidas estadisticas quedan nulas 
+  
+  
+}
+
+
+# Resultados
+# ==============================================================================
+resultados <- combinatoria
+resultados$r_cuadrado <- r_cuadrado
+resultados$mse_entrenamiento <- mse_train
+resultados$mse_prueba <- mse_test
+resultados$variacion_mse <- variaciones_mse
+resultados <- arrange(resultados,desc(r_cuadrado))
+```
+
+
+```{r}
+# Top 10 de los modelos respecto al r_cuadrado
+# ==============================================================================
+resultados <- resultados[!is.na(resultados$r_cuadrado),]
+head(resultados, 10)
+```
+
+
+Luego de tener las modelos optimos respecto al r_cuadrado se procede a filtrar la base de datos para que solo permita modelos con una variación del MSE menor al 15% debido a que se necesita que el modelo no quede sobreentrenado.
+
+```{r}
+# Top 5 de los modelos excluyendo los sobreentrenados
+# ==============================================================================
+resultados <- filter(resultados, variacion_mse <= 0.15)
+head(resultados, 20)
+```
+
+En los primeros 14 modelos mas optimos respecto a nuestras medidas estadisticas no incluyen a barrio como una variables significativa, solo hasta llegar al modelo numero 15 se considera el barrio como una variable a considerar pero ese modelo solo tiene un R_cuadrado del 25%, en cambio los modelos que no consideran esta variable en los modelos pueden llegan a tener aproximadamente un R_cuadrado del 70%, la diferencia es abismal, entonces se decide elimiar a barrio como variable independiente por cual las variables independientes quedan siendo la fecha, si es festivo o no y la comuna.
+
+Luego de decidir las variables independientes que se usarán en la predicción se decide tomar los hiperparametros del segundo modelo en la tabla anterior debido a que el r cuadrado del primer modelo vs el segundo modelo no varia casi nada, en cambio la diferencia entre estos dos modelos en la variación del MSE es bastante (el primer modelo con una variación del 11,22% y el segundo modelo con una varación del 2,68%).
+
+En conclusión se tomará como modelo predictivo aquel que usa como variables independientes de fecha, festivo y comuna, además con unos hiperparametros de mtry = 2 y max_depth = 10
+
+
+## Modelo predictivo optimo
+
+```{r}
+# ENTRENAMIENTO FINAL
+# =============================================================================
+datos <- accidentes %>% group_by(fecha,festivo,comuna) %>% count(name = "numero_accidentes")
+datos_train <- subset(datos, format(fecha,"%Y") %in% c(2014,2015,2016,2017))
+datos_test  <- subset(datos, format(fecha,"%Y") %in% c(2018))
+
+set.seed(31)
+modelo  <- ranger(
+            formula   = numero_accidentes ~ .,
+            data      = datos_train,
+            num.trees = 150,
+            mtry      = 2,
+            max.depth = 10,
+            seed      = 31
+           )
+
+print(modelo)
+```
+
+
+```{r}
+save("modelo",file = "modelo_predictivo.Rdata")
+```
+
+
+```{r}
+## Variación del MSE del modelo final
+# ==============================================================================
+predicciones_train <- predict(
+                        modelo, 
+                        data = datos_train
+                      )
+
+mse_predicciones_train <- mse(predicciones_train$predictions, datos_train$numero_accidentes)
+
+
+predicciones_test <- predict(
+                        modelo, 
+                        data = datos_test
+                      )
+
+mse_predicciones_test <- mse(predicciones_test$predictions, datos_test$numero_accidentes)
+
+
+variacion_mse <- (abs(mse_predicciones_test-mse_predicciones_train)/mse_predicciones_train)*100
+
+paste("La variación entre los mse de entrenamiento y prueba para el modelo optimo de Bosque Aleatorio entrenado es de ", round(variacion_mse,2), "%")
+
+```
+
+
+## Predicciones futuras
+
+Como vimos anteriormente, ya se cuenta con un modelo optimo para predecir la accidentalidad en Medellín respecto a su fecha, si es festivo o no, y la comuna, entonces se continúa prediciendo el número de accidente entre los años 2019 al 2022.
+
+
+```{r}
+datos_prediccion <- read.csv("dataset/datos_prediccion.csv",header = TRUE,encoding='UTF-8')
+datos_prediccion$fecha <- as.Date(datos_prediccion$fecha)
+datos_prediccion$festivo <- as.logical(datos_prediccion$festivo)
+datos_prediccion <- select(datos_prediccion,fecha,festivo,comuna)
+
+head(datos_prediccion,10)
+```
+
+
+```{r}
+predicciones_futuras <- predict(
+                              modelo, 
+                              data = datos_prediccion
+                      )
+
+predicciones_2019_2022 <- datos_prediccion
+predicciones_2019_2022$numero_accidentes <- floor(predicciones_futuras$predictions)
+head(predicciones_2019_2022,10)
+```
+
+
