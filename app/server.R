@@ -121,7 +121,7 @@ shinyServer(function(input, output) {
       "numero_accidentes" = NULL
     )
     
-    output$prediccion <- DT::renderDataTable(({
+    output$prediccion <- DT::renderDataTable(DT::datatable({
       
       if(input$tipo_prediccion != "---"){
         load("www/modelo_predictivo.Rdata")
