@@ -110,7 +110,17 @@ shinyUI(
              
              
            )
+           ),
+  tabPanel(title="Video",
+           icon = icon("youtube"),
+           fluidPage(
+           HTML(paste0(
+             '<iframe width="560" height="315" src="https://www.youtube.com/embed/VTM6SDmXuas" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>'
+           ))
            )
+
+  )
+  
   
   
 ))
