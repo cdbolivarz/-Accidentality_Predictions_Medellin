@@ -73,6 +73,7 @@ shinyUI(
            icon = icon("chart-bar"),
            fluidPage(
              titlePanel("Resultados modelos predictivos"),
+             p("El modelo solo puede realizar predicciones entre el 2019 y el 2022"),
              fluidRow(
                #fechas
                column(4,
@@ -80,25 +81,18 @@ shinyUI(
                    "fecha_prediccion", 
                    label = "Ingrese la fecha:",
                    start = '2019-01-01',
-                   end = '2019-12-31')
+                   end = '2022-12-31',
+                   min = '2019-01-01',
+                   max = '2022-12-31')
                  ),
                column(4,
                  #tipo
                  selectInput(
                    "tipo_prediccion",
-                   label = "nivel predicción",
+                   label = "Nivel predicción",
                    selected = "---",
                    choices = c("---","Diario","Semanal","Mensual")
-                 )),
-               column(4, 
-                 #clase
-                 selectInput(
-                   "clase_prediccion",
-                   label = "Clase",
-                   selected = "TODAS",
-                   choices = c("TODAS",toupper(distinct(accidentes,clase)$clase))
-                 )
-               )
+                 ))
              ),
              mainPanel(width = 12,
                        DT::dataTableOutput("prediccion")

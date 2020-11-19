@@ -15,12 +15,21 @@ shinyServer(function(input, output) {
     library(dplyr)
     library(leaflet)
     library(sf)
+    library(tidymodels)
+    library(ranger)
+    library(doParallel)
+    library(Metrics)
     
     accidentes <- read.csv("www/accidentes_medellin.csv",header = TRUE,encoding='UTF-8')
     accidentes$comuna <- str_replace_all(accidentes$comuna, "laureles-estadio","laureles estadio")
     accidentes$fecha <- as.Date(accidentes$fecha) 
     barrios <- read_sf("barrios/Barrio_Vereda.shp")
     barrios <- mutate_if(barrios, is.character, tolower)
+    datos_prediccion <- read.csv("www/datos_prediccion.csv",header = TRUE,encoding='UTF-8')
+    datos_prediccion$fecha <- as.Date(datos_prediccion$fecha)
+    datos_prediccion$festivo <- as.logical(datos_prediccion$festivo)
+    datos_prediccion <- select(datos_prediccion,fecha,festivo,comuna)
+    datos_prediccion <- arrange(datos_prediccion,fecha)
     
     #MAPA DE ANTECEDENTES
     
@@ -107,30 +116,41 @@ shinyServer(function(input, output) {
     
       
     mi_df <- data.frame(
-      "dia_anno" = NULL,
-      "choque" = NULL,
-      "otro" = NULL,
-      "atropello" = NULL,
-      "volcamiento" = NULL,
-      "caida ocupante" = NULL,
-      "incendio" = NULL,
-      "choque y atropello" = NULL
+      "fecha" = NULL,
+      "comuna" = NULL,
+      "numero_accidentes" = NULL
     )
     
-    output$prediccion <- DT::renderDataTable(DT::datatable({
+    output$prediccion <- DT::renderDataTable(({
+      
       if(input$tipo_prediccion != "---"){
-        # load(modelo.Rdata)
+        load("www/modelo_predictivo.Rdata")
         
-        dia_anno<-sample(1:365, size = 100, replace = TRUE)
-        choque<-sample(1:365, size = 100, replace = TRUE)
-        otro<-sample(1:365, size = 100, replace = TRUE)
-        atropello<-sample(1:365, size = 100, replace = TRUE)
-        volcamiento<-sample(1:365, size = 100, replace = TRUE)
-        caida_ocupante<-sample(1:365, size = 100, replace = TRUE)
-        incendio<-sample(1:365, size = 100, replace = TRUE)
-        coque_y_atropello<-sample(1:365, size = 100, replace = TRUE)
-        mi_df <- data.frame(dia_anno,choque,otro,atropello,volcamiento,caida_ocupante,
-                            incendio,coque_y_atropello)
+        predicciones_futuras <- predict(
+          modelo, 
+          data = datos_prediccion
+        )
+        
+        predicciones_2019_2022 <- datos_prediccion
+        predicciones_2019_2022$numero_accidentes <- floor(predicciones_futuras$predictions)
+        
+        mi_df <- predicciones_2019_2022 %>%
+                  filter(
+                    fecha >= input$fecha_prediccion[1],
+                    fecha <= input$fecha_prediccion[2]
+                  )
+        
+        if(input$tipo_prediccion == "Mensual"){
+          mi_df <- mi_df %>%
+                  mutate(mes = format(fecha, "%m"), anno = format(fecha, "%Y")) %>%
+                  group_by(mes, anno, comuna) %>%summarise(total = sum(numero_accidentes))
+          mi_df <- arrange(mi_df,anno)
+        }else if(input$tipo_prediccion == "Semanal"){
+          mi_df<-mi_df %>%
+                  mutate(anno = format(fecha, "%Y"), semana = strftime(fecha, format = "%V")) %>%
+                  group_by(semana, anno, comuna) %>%summarise(total = sum(numero_accidentes))
+          mi_df <- arrange(mi_df,anno)
+        }
       }
       mi_df
     }))
