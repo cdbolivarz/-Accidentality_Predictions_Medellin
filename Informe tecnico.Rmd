@@ -1,14 +1,14 @@
 ---
-title: "Informe técnico - Trabajo técnicas de aprendizaje estadístico"
-author: "Daniela Higuita Alcaraz - Carlos Daniel Bolivar Zapata - Augusto Balbín Restrepo - Manuela Barba Guerra - Juan Felipe Valencia Carvajal"
-date: "19/11/2020"
+title: "Informe técnico - Trabajo TAE"
+author: "Daniela Higuita Alcaraz <br><br> Carlos Daniel Bolivar Zapata <br><br> Augusto Balbín Restrepo <br><br> Manuela Barba Guerra <br><br> Juan Felipe Valencia Carvajal"
 output:
   html_document: default
   pdf_document: default
 ---
+<div style="text-align: justify">
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE, comment = "", cache = TRUE)
 ```
 
 ```{r echo=FALSE}
@@ -44,6 +44,22 @@ library(sf)
 
 ```
 
+# **Introducción**  
+
+En este trabajo se propone la utilización de herramientas de aprendizaje estadístico para realizar un agrupamiento y predicción de la accidentalidad en Medellín a partir de los datos de accidentalidad reportados en las bases de datos abiertos de [MEData](http://medata.gov.co/).  
+
+El código de los algoritmos, la limpieza de los datos y el desarrollo de la app se pueden encontrar en este repositorio de [GitHub](https://github.com/cdbolivarz/Accidentality_Predictions_Medellin). Además, la app se puede encontrar en [Shiny](https://dhiguitaa.shinyapps.io/Medellin_crash/) para que los usuarios puedan explorar de forma interactiva el estudio de accidentalidad realizado y en [YouTube](https://www.youtube.com/watch?v=VTM6SDmXuas&ab_channel=seztans) está disponible un video explicativo sobre cómo manejar la app.  
+
+Por otro lado, en este informe técnico se describe todo el proceso detallado de la realización de este estudio de la accidentalidad en Medellín, en el apartado de la limpieza de la base de datos se realizó en Python y los demás ítems se realizaron en R.
+
+
+
+# **Limpieza de la base de datos**
+
+La limpieza de las bases de datos de la accidentalidad de Medellín entre los años 2014 y 2018 se realizó en Python debido a la apropiación de este lenguaje de programación del equipo de trabajo, el archivo se puede encontrar en el repositorio de GitHub mencionado anteriormente, en este archivo se puede ver como se realizó el preprocesamiento de los datos, la integración de una nueva columna llamada festivo para clasificar las fechas en fechas especiales o no, además se decide eliminar los corregimientos de accidentalidad en Medellín porque no pertenece a la zona urbana de la ciudad y además esos datos no eran significativos para la realización de unos modelos estadísticos apropiados, también se hace la limpieza adecuada de los valores nulos e incoherentes que se podían encontrar en las columnas de estas base de datos originales, entre otras limpiezas necesarias.
+
+
+
 # **Predicción de accidentalidad en medellín**
 
 Se decide realizar el modelado predictivo usando el método de árboles aleatorios por ser uno de los algoritmos de aprendizaje más certeros que hay disponible, ofrece un método experimental para detectar las interacciones de las variables, entre otras ventajas [1]. Para la realización del proyecto se toma como base el código propuesto en un artículo sobre los árboles aleatorios encontrado en la siguiente pagina [“Arboles aleatorios”](https://www.cienciadedatos.net/documentos/33_arboles_decision_random_forest_gradient_boosting_c50#Random_Forest). [2]
@@ -55,10 +71,10 @@ accidentes <- read.csv("dataset/accidentes_medellin.csv",header = TRUE,encoding=
 accidentes$fecha <- as.Date(accidentes$fecha)
 accidentes$festivo <- as.logical(accidentes$festivo)
 accidentes <- select(accidentes,fecha,hora,festivo,comuna,barrio,longitud,latitud,clase,gravedad)
-head(accidentes)
+DT::datatable(head(accidentes,100))
 ```
 
-##Definición de variables independientes y dependientes.
+## Definición de variables independientes y dependientes.
 
 Para el modelo predictivo hay que tener claro cuáles serán las variables independientes y dependientes. A simple vista de la base de datos de accidentalidad se puede concluir que las posibles variables independientes son la fecha, la hora, si es festivo o no, la comuna, el barrio, la longitud y latitud. Para las variables dependientes se tienen la clase de accidentalidad y la gravedad debido que como el modelo predice la accidentalidad estas son las únicas que posiblemente queremos predecir.
 
@@ -73,6 +89,7 @@ barplot(conteoClase, main="Distribución de accidentes por clase",
         xlab="Clase de accidente",
         legend=rownames(conteoClase),
         beside=TRUE,
+        col="#469536",
         cex.names = 0.7,
         las=1)
 grid(20,20)
@@ -87,7 +104,7 @@ En primer lugar es necesario crear la variable de número de accidentes agrupada
 
 ```{r}
 datos <- accidentes %>% group_by(fecha,festivo,comuna,barrio) %>% count(name = "numero_accidentes")
-head(datos)
+DT::datatable(head(datos,100))
 ```
 
 
@@ -105,12 +122,12 @@ datos_test  <- subset(datos, format(fecha,"%Y") %in% c(2018))
 
 
 ```{r}
-head(datos_train)
+DT::datatable(head(datos_train,100))
 ```
 
 
 ```{r}
-head(datos_test)
+DT::datatable(head(datos_test,100))
 ```
 
 
@@ -128,7 +145,7 @@ modelo  <- ranger(
             seed      = 31
            )
 
-print(modelo)
+modelo
 
 ```
 
@@ -140,7 +157,7 @@ predicciones_train <- predict(
                         data = datos_train
                       )
 
-## MSE --> mse(y_pred, y_true)
+## MSE: mse(y_pred, y_true)
 # ==============================================================================
 mse_predicciones_train <- mse(predicciones_train$predictions, datos_train$numero_accidentes)
 paste("El MSE para el conjunto de entrenamiento es:",mse_predicciones_train)
@@ -155,7 +172,7 @@ predicciones_test <- predict(
                         data = datos_test
                       )
 
-## MSE --> mse(y_pred, y_true)
+## MSE: mse(y_pred, y_true)
 # ==============================================================================
 mse_predicciones_test <- mse(predicciones_test$predictions, datos_test$numero_accidentes)
 paste("El MSE para el conjunto de prueba es:",mse_predicciones_test)
@@ -167,7 +184,7 @@ paste("El MSE para el conjunto de prueba es:",mse_predicciones_test)
 # ==============================================================================
 variacion_mse <- (abs(mse_predicciones_test-mse_predicciones_train)/mse_predicciones_train)*100
 
-paste("La variación entre los mse de entrenamiento y prueba para el modelo de Bosque Aleatorio entrenado con 10 árboles es de ", round(variacion_mse,2), "%")
+paste("La variación entre los MSE de entrenamiento y prueba con 150 árboles es de ", round(variacion_mse,2), "%")
 ```  
 
 Como se puede ver la medida estadística del R-cuadrado concluye que el modelo se ajusta en un 24.41 % a los datos de entrenamiento y obtiene una variación de MSE del 10.46% lo que define que el modelo no está tan sobreentrenado. Los resultados de las medidas estadísticas de este modelo no son malas pero puede llegar a ser mejores, entonces se procederá a realizar varios modelos con diferentes cantidades de variables independientes para obtener cual conjunto de variables es el ideal para la creación del modelo, además también se jugará con los hiperparametros de los árboles aleatorios (mtry y max_depth) debido a que estos parámetros provocan muchos cambios en las predicciones, entonces se buscará aquellos que son óptimos en primer lugar para hallar los mejores modelos con R_cuadrado y posteriormente se analizará cuál de todos esos modelos cumplen con una variación de MSE buena.
@@ -287,8 +304,9 @@ resultados <- arrange(resultados,desc(r_cuadrado))
 ```{r}
 # Top 10 de los modelos respecto al r_cuadrado
 # ==============================================================================
+resultados <- select(resultados,fecha,festivo,comuna,barrio,max_depth,mtry,r_cuadrado,variacion_mse)
 resultados <- resultados[!is.na(resultados$r_cuadrado),]
-head(resultados, 10)
+DT::datatable(head(resultados,10))
 ```
 
 
@@ -296,10 +314,10 @@ Luego de tener las modelos óptimos respecto al R_cuadrado se procede a filtrar 
 
 
 ```{r}
-# Top 20 de los modelos excluyendo los sobreentrenados
+# Top 20 de los modelos excluyendo los sobreentrenados.
 # ==============================================================================
 resultados <- filter(resultados, variacion_mse <= 0.15)
-head(resultados, 20)
+DT::datatable(head(resultados,20))
 ```
 
 En los primeros 14 modelos más óptimos respecto a nuestras medidas estadísticas no incluyen a barrio como una variables significativa, solo hasta llegar al modelo número 15 se considera el barrio como una variable a considerar pero ese modelo solo tiene un R_cuadrado del 25%, en cambio los modelos que no consideran esta variable en los modelos pueden llegar a tener aproximadamente un R_cuadrado del 70%, la diferencia es abismal, entonces se decide eliminar a barrio como variable independiente por lo cual las variables independientes quedan siendo la fecha, si es festivo o no y la comuna.
@@ -375,7 +393,7 @@ datos_prediccion$fecha <- as.Date(datos_prediccion$fecha)
 datos_prediccion$festivo <- as.logical(datos_prediccion$festivo)
 datos_prediccion <- select(datos_prediccion,fecha,festivo,comuna)
 
-head(datos_prediccion,10)
+DT::datatable(head(datos_prediccion,100))
 ```
 
 
@@ -387,7 +405,7 @@ predicciones_futuras <- predict(
 
 predicciones_2019_2022 <- datos_prediccion
 predicciones_2019_2022$numero_accidentes <- floor(predicciones_futuras$predictions)
-head(predicciones_2019_2022,10)
+DT::datatable(head(predicciones_2019_2022,100))
 ```
 
 
@@ -396,13 +414,13 @@ head(predicciones_2019_2022,10)
 
 ## Creación de variables convenientes para la agrupación
 
-CF -> Cantidad de  incidentes días festivos.
-ES -> Cantidad de incidentes entre semana.
-FS -> Cantidad de incidentes fin de semana.
-CA -> Cantidad de incidentes de clase 'atropello'.
-CC -> Cantidad de incidentes de clase 'choque'.
-CH -> Cantidad de incidentes de gravedad 'herido'.
-CM -> Cantidad de incidentes de gravedad 'muerto'.
+**CF:** Cantidad de  incidentes días festivos.  
+**ES:** Cantidad de incidentes entre semana.  
+**FS:** Cantidad de incidentes fin de semana.  
+**CA:** Cantidad de incidentes de clase 'atropello'.  
+**CC:** Cantidad de incidentes de clase 'choque'.  
+**CH:** Cantidad de incidentes de gravedad 'herido'.  
+**CM:** Cantidad de incidentes de gravedad 'muerto'.  
 
 ```{r}
 accidentes <- read.csv("dataset/accidentes_medellin.csv",header = TRUE,encoding='UTF-8')
@@ -422,18 +440,19 @@ accidentes <- read.csv("dataset/accidentes_medellin.csv",header = TRUE,encoding=
   accidentes_vars <- data.frame(accidentes_vars)
   row.names(accidentes_vars) <- accidentes_vars$barrio
   accidentes_vars[1] <- NULL
-  head(accidentes_vars)
+  DT::datatable(head(accidentes_vars,100))
 ```
 
 ## Preprocesamiento y validación
 
-Escalar los datos.
 
 ```{r}
+#Escalar los datos
+# ==============================================================================
 accidentes_sc <- scale(accidentes_vars)
 ```
 
-Se calcula el estadístico de Hopkins para verificar si los datos tienen tendencia a agruparse. Si el estadístico es mayor a 0.5, esto quiere decir que el conjunto de datos es significativamente agrupable.
+Se calcula el estadístico de Hopkins para verificar si los datos tienen tendencia a agruparse. Si el estadístico es mayor a 0.5, esto quiere decir que el conjunto de datos es significativamente agrupable:
 
 
 ```{r}
@@ -441,7 +460,7 @@ res <- get_clust_tendency(accidentes_sc, n = nrow(accidentes_sc)-1, graph = FALS
 res$hopkins_stat
 ```
 
-Se calcula el K óptimo para kmeans.
+Se calcula el K óptimo para kmeans:
 
 ```{r}
 fviz_nbclust(accidentes_sc, kmeans, method = "wss", k.max = 24) + theme_minimal() + ggtitle("Elbow method")
@@ -461,42 +480,44 @@ intern <- clValid(accidentes_sc, nClust = 3:4,
 summary(intern)
 ```
 Con los resultados obtenidos, se puede concluir que kmeans o hierarchical con $k=3$ son los algoritmos de agrupamiento óptimo.
-Se elige Kmeans.
 
 ```{r}
+# Se elige Kmeans
+# ==============================================================================
 km.res <- kmeans(accidentes_sc, 3, nstart = 25)
 ```
 
-Cantidad de barrios por grupo.
+Cantidad de barrios por grupo:
 
 ```{r}
 table(km.res[1])
 ```
 
-Se agrega la columna de grupo a los datos de accidentes.
 
 ```{r}
+# Se agrega la columna de grupo a los datos de accidentes.
+# ==============================================================================
 accidentes_vars$grupo <- km.res$cluster
 ```
 
 
-Nombres para cada cluster.
 
 ```{r}
+# Nombres para cada cluster.
+# ==============================================================================
 grupos_hclust_lb <- ifelse(km.res$cluster==1,"Riesgo menor",
                            ifelse(km.res$cluster==2,"Riesgo mayor", "Riesgo medio"))
 ```
 
 
-Medias:
-
-```{r}
+```{r include=FALSE}
+# Medias:
 aggregate(cbind(CF,ES,FS,CA,CC,CH,CM)~grupos_hclust_lb,data=accidentes_vars,FUN=mean)
 ```
 
 ## Lectura de mapa y relación con los resultados obtenidos
 
-Lectura de mapa.
+Lectura de mapa:
 
 ```{r}
 options(scipen = 999)
@@ -504,15 +525,18 @@ medellin_shape <- st_read("shapes/Barrio_Vereda/BarrioVereda_2014.shp", stringsA
 medellin_shape$NOMBRE <- tolower(medellin_shape$NOMBRE)
 ```
 
-Relación de los datos agrupados con el mapa
 
 ```{r}
+#Relación de los datos agrupados con el mapa:
 accidentes_vars$NOMBRE <- row.names(accidentes_vars)
 map_and_data <- inner_join(medellin_shape, accidentes_vars)
 ```
 
 
 ## Mapa de barrios y veredas Medellín agrupados por accidentalidad
+
+En este pasa tambíen se visualizará las veredas con el fin de ver como se comporta pero aun así se siguirá descartando por los pocos datos que contiene.
+
 
 ```{r, warning=FALSE}
 ggplot(map_and_data)+
@@ -527,14 +551,15 @@ ggplot(map_and_data)+
 
 ## Características espaciales por grupo
 
-*General:* Es notable que el riesgo de accidente de tráfico por barrio aumenta a medida que se va acercando al centro del municipio, excepto en el caso del corregimiento de San Cristóbal.
+**General:** Es notable que el riesgo de accidente de tráfico por barrio aumenta a medida que se va acercando al centro del municipio, excepto en el caso del corregimiento de San Cristóbal.
 Cabe recalcar que lo que se menciona como riesgo, está enfocado a la probabilidad de sufrir un incidente (choque o atropello) en un barrio y resultar herido o muerto. 
 
-*Riesgo bajo:* barrios pertenecientes a las comunas San Javier, La América, El Poblado, Buenos Aires, Villa Hermosa, Santa Cruz y El Popular. Esto puede ser debido a que estos lugares son espacios residenciales, por lo cual los trayectos entre calles es reducido y las velocidades alcanzadas por los medios de transporte son moderadas, además de que los niveles de tráfico son más reducidos. Todos estos factores hacen que este conjunto se considere como un riesgo bajo y se ve evidenciado con los resultados obtenidos.
+**Riesgo bajo:** barrios pertenecientes a las comunas San Javier, La América, El Poblado, Buenos Aires, Villa Hermosa, Santa Cruz y El Popular. Esto puede ser debido a que estos lugares son espacios residenciales, por lo cual los trayectos entre calles es reducido y las velocidades alcanzadas por los medios de transporte son moderadas, además de que los niveles de tráfico son más reducidos. Todos estos factores hacen que este conjunto se considere como un riesgo bajo y se ve evidenciado con los resultados obtenidos.
 
-*Riesgo medio:* Este conjunto está conformado por los barrios que están entre los extremos del municipio y los del centro. Algunos barrios que hacen parte de las comunas 12 de Octubre, Castilla, Aranjuez, Laureles, Estadio, La Candelaria, Manrique, Belén, Guayabal y El Poblado. Las razones por las que se presenta esto, es por que estos barrios conectan las zonas residenciales con las comerciales y ayudan a llegar a las vías principales del municipio; debido a esto, hay un aumento en el tráfico, velocidades y por ende en la probabilidad de tener un accidente.
+**Riesgo medio:** Este conjunto está conformado por los barrios que están entre los extremos del municipio y los del centro. Algunos barrios que hacen parte de las comunas 12 de Octubre, Castilla, Aranjuez, Laureles, Estadio, La Candelaria, Manrique, Belén, Guayabal y El Poblado. Las razones por las que se presenta esto, es por que estos barrios conectan las zonas residenciales con las comerciales y ayudan a llegar a las vías principales del municipio; debido a esto, hay un aumento en el tráfico, velocidades y por ende en la probabilidad de tener un accidente.
 
-*Riesgo alto:* Como anteriormente se mencionó este conjunto está ubicado en el centro del municipio, ya que ahí está ubicada la zona comercial y las principales vías para entrar y salir del municipio, lo que conlleva al máximo tráfico. Además que se tiene que considerar que en estas vías entran vehículos que ocupan más espacio y son más pesados, tales como, camiones, mulas, buses, etc. si a esto le agregamos altas velocidades, no solo la probabilidad de accidente se hace más grande, así mismo aumenta la probabilidad de que una o varias personas resulten heridas o en el peor de los casos muerta en algún accidente.
+**Riesgo alto:** Como anteriormente se mencionó este conjunto está ubicado en el centro del municipio, ya que ahí está ubicada la zona comercial y las principales vías para entrar y salir del municipio, lo que conlleva al máximo tráfico. Además que se tiene que considerar que en estas vías entran vehículos que ocupan más espacio y son más pesados, tales como, camiones, mulas, buses, etc. si a esto le agregamos altas velocidades, no solo la probabilidad de accidente se hace más grande, así mismo aumenta la probabilidad de que una o varias personas resulten heridas o en el peor de los casos muerta en algún accidente.
+
 
 
 # **Referencias**
@@ -543,6 +568,6 @@ Cabe recalcar que lo que se menciona como riesgo, está enfocado a la probabilid
 
 [2] J. Rodrigo, "Arboles de decision, Random Forest, Gradient Boosting y C5.0", Cienciadedatos.net, 2020. [Online]. Available: https://www.cienciadedatos.net/documentos/33_arboles_decision_random_forest_gradient_boosting_c50#Random_Forest.
 
-
+<div/>
 
 
